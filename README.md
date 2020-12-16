@@ -1,4 +1,4 @@
-vim-peekaboo
+vim-peekapoop
 ============
 
 ![](https://cloud.githubusercontent.com/assets/700826/6095261/bb00340c-af96-11e4-9df5-9cd869673a11.gif)
@@ -6,19 +6,21 @@ vim-peekaboo
 Peekaboo extends `"` and `@` in normal mode and `<CTRL-R>` in insert mode so
 you can see the contents of the registers.
 
+Shamelessly ~~ripped off~~based off of [](junegunn/vim-peekaboo). 
+
 Installation
 ------------
 
 Using [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```vim
-Plug 'junegunn/vim-peekaboo'
+Plug 'ixil/vim-peekapoop'
 ```
 
 Usage
 -----
 
-Peekaboo will show you the contents of the registers on the sidebar when you
+Peekapoop will show you the contents of the registers on the sidebar when you
 hit `"` or `@` in normal mode or `<CTRL-R>` in insert mode. The sidebar is
 automatically closed on subsequent key strokes.
 
