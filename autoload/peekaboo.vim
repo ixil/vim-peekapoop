@@ -161,7 +161,7 @@ function! peekaboo#peek(count, mode, visualmode)
   return "\<Plug>(peekaboo)"
 endfunction
 
-function! peekaboo#aboo()
+function! peekaboo#aboo(insert_mode)
   let [cnt, mode, visualmode] = s:args
 
   if s:is_open()
