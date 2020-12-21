@@ -59,8 +59,6 @@ function! s:close()
   silent! execute 'bd' s:buf_peekaboo
   let s:buf_peekaboo = 0
   execute s:winrestcmd
-  silent! autocmd! peekaboo_hide
-  silent! augroup! peekaboo_hide
 endfunction
 
 " Appends macro list for the specified group to Peekaboo window
@@ -77,7 +75,7 @@ function! s:append_group(title, regs)
         continue
       endif
       let s:regs[printf('%s', r)] = line('$')
-      call append(line('$'), printf(' %s: %s', r, val))
+      call append(line('$'), printf(' %s: %s', r, substitute(val, '^\s*', '', '')))
     catch
     endtry
   endfor
@@ -117,10 +115,10 @@ endfunction
 " Triggers gv to keep visual highlight on
 function! s:gv(visualmode, visible)
   if a:visualmode && a:visible
-    wincmd p
+    noautocmd wincmd p
     normal! gv
     redraw
-    wincmd p
+    noautocmd wincmd p
   else
     redraw
   endif
@@ -163,7 +161,7 @@ function! peekaboo#peek(count, mode, visualmode)
   return "\<Plug>(peekaboo)"
 endfunction
 
-function! peekaboo#aboo(insert_mode)
+function! peekaboo#aboo()
   let [cnt, mode, visualmode] = s:args
 
   if s:is_open()
