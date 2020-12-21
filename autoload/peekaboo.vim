@@ -24,15 +24,41 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 " Default options
+let s:popup = 0
 let s:default_delay = 0
-let s:default_window = 'vertical botright 30new'
+let s:default_window_pos = ''
 let s:default_compact = 0
+let s:default_window = 'call s:createPopup()'
 
 let s:QUOTE  = '"'
 let s:REPLAY = '@'
 let s:CTRL_R = "\<c-r>"
 
-let s:buf_peekaboo = 0
+function! s:createPopup()
+  " let width = float2nr(&columns * 0.6)
+  " let height = float2nr(&lines * 0.6)
+  " 'maxwidth': width, 'height': height, \
+  let opts = {
+        \ 'line'      : 1,
+        \  'col'      : -30,
+        \ 'pos'       : 'topright',
+        \ 'hidden'    : 1,
+        \ 'title'     : 'Registers',
+        \ 'highlight' : 'peekaboo',
+        \ 'mapping'   : 0,
+        \ 'wrap'      : 0,
+        \ 'cursorline': 0,
+        \ 'scrollbar' : 0,
+        \ 'zindex'    : 300
+        \ }
+  " setfiletype peekaboo
+  " augroup peekaboo
+  "   autocmd!
+  "   autocmd CursorMoved <buffer> bd
+  " augroup END
+  " au BufWipeout <buffer> exe 'bw '.s:buf
+  let s:popup = popup_create('', opts)
+endfunction
 
 " Returns true if timed out
 function! s:wait_with_timeout(timeout)
@@ -51,15 +77,25 @@ endfunction
 
 " Checks if Peekaboo buffer is open
 function! s:is_open()
-  return s:buf_peekaboo
+  return s:popup
 endfunction
 
 " Closes peekaboo buffer
 function! s:close()
-  silent! execute 'bd' s:buf_peekaboo
-  let s:buf_peekaboo = 0
-  execute s:winrestcmd
+  call popup_close(s:popup)
+  let s:popup = 0
 endfunction
+
+function! s:popup_filter_menu(winid, key)
+    
+  keys = ['"', '*', '+', '-',
+        \ '.', '%', '#', '/', ':', 
+        \ map(range(0, 9), 'string(v:val)'),
+        \ map(range(97, 97 + 25), 'nr2char(v:val)')
+        \ ]
+  if get(keys, ) in
+
+endfunc
 
 " Appends macro list for the specified group to Peekaboo window
 function! s:append_group(title, regs)
@@ -84,27 +120,19 @@ endfunction
 
 " Opens peekaboo window
 function! s:open(mode)
-  let [s:buf_current, s:buf_alternate, s:winrestcmd] = [@%, @#, winrestcmd()]
-  execute get(g:, 'peekaboo_window', s:default_window)
-  let s:buf_peekaboo = bufnr('')
-  setlocal nonumber buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
-  \ modifiable statusline=>\ Registers nocursorline nofoldenable
-  if exists('&relativenumber')
-    setlocal norelativenumber
-  endif
-
-  setfiletype peekaboo
-  augroup peekaboo
-    autocmd!
-    autocmd CursorMoved <buffer> bd
-  augroup END
-
   let s:regs = {}
   call s:append_group('Special', ['"', '*', '+', '-'])
   call s:append_group('Read-only', a:mode ==# s:REPLAY ? ['.', ':'] : ['.', '%', '#', '/', ':'])
   call s:append_group('Numbered', map(range(0, 9), 'string(v:val)'))
   call s:append_group('Named', map(range(97, 97 + 25), 'nr2char(v:val)'))
-  normal! "_dd
+
+  let [s:buf_current, s:buf_alternate] = [@%, @#]
+
+  execute get(g:, 'peekaboo_window', s:default_window)
+  popup_settext(s:popup, s:regs)
+  popup_show(s:popup, s:regs)
+
+  " normal! "_dd
 endfunction
 
 " Checks if the buffer for the position is visible on screen
@@ -192,12 +220,6 @@ function! peekaboo#aboo()
         continue
       endif
 
-      if zoom
-        tab close
-        noautocmd execute 'tabnext' positions.current.tab
-        let [&showtabline, &laststatus] = [stl, lst]
-        call s:gv(visualmode, visible)
-      endif
       if reg != ' '
         break
       endif
@@ -222,17 +244,6 @@ function! peekaboo#aboo()
 
     " - Make sure that we're back to the original tab/window/buffer
     "   - e.g. g:peekaboo_window = 'tabnew' / 'enew'
-    if inplace
-      noautocmd execute positions.current.win.'wincmd w'
-      noautocmd execute 'buf' positions.current.buf
-    else
-      noautocmd execute 'tabnext' positions.current.tab
-      call s:close()
-      noautocmd execute positions.current.win.'wincmd w'
-    endif
-    if visualmode
-      normal! gv
-    endif
     call s:feed(cnt, mode, reg, rest)
   catch /^Vim:Interrupt$/
     return
@@ -242,6 +253,7 @@ function! peekaboo#aboo()
     redraw
   endtry
 endfunction
+
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
